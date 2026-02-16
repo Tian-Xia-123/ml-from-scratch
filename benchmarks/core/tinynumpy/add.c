@@ -11,9 +11,10 @@ int main() {
   int N = 50000000;
   int shape[] = {N};
   int ndim = 1;
-  int fd = setup_perf_event(PERF_COUNT_HW_CACHE_L1D |
-                            PERF_COUNT_HW_CACHE_OP_READ << 8 |
-                            PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
+  int fd = setup_perf_event(PERF_TYPE_HW_CACHE,
+                            PERF_COUNT_HW_CACHE_L1D |
+                                PERF_COUNT_HW_CACHE_OP_READ << 8 |
+                                PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
 
   ndarray *a = np_array(ndim, shape);
   ndarray *b = np_array(ndim, shape);

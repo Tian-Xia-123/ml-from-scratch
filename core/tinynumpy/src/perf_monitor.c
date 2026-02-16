@@ -6,10 +6,10 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-int setup_perf_event(int event) {
-  struct perf_event_attr pe = {.type = PERF_TYPE_HW_CACHE,
+int setup_perf_event(int type, int config) {
+  struct perf_event_attr pe = {.type = type,
                                .size = sizeof(struct perf_event_attr),
-                               .config = event,
+                               .config = config,
                                .disabled = 1,
                                .exclude_kernel = 1,
                                .exclude_hv = 1};

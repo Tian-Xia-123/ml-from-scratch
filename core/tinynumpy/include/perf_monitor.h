@@ -2,7 +2,7 @@
 #define PERF_MONITOR_H
 
 // Initializes the perf event
-int setup_perf_event(int event);
+int setup_perf_event(int type, int config);
 
 // Starts the perf event
 void start_perf_event(int fd);
