@@ -17,6 +17,7 @@ int setup_perf_event(int type, int config) {
   int fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
   if (fd < 0) {
     perror("Error: perf_event_open failed.");
+    return -1;
   }
 
   return fd;
@@ -26,6 +27,7 @@ void start_perf_event(int fd) {
   if (fd < 0) {
     fprintf(stderr, "Error: Cannot stop. Invalid file descriptor (fd=%d).\n",
             fd);
+    return;
   }
   ioctl(fd, PERF_EVENT_IOC_RESET, 0);
   ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
@@ -35,6 +37,7 @@ void stop_perf_event(int fd) {
   if (fd < 0) {
     fprintf(stderr, "Error: Cannot stop. Invalid file descriptor (fd=%d).\n",
             fd);
+    return;
   }
   ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
 }
@@ -43,6 +46,7 @@ long long read_perf_event(int fd) {
   if (fd < 0) {
     fprintf(stderr, "Error: Cannot read. Invalid file descriptor (fd=%d).\n",
             fd);
+    return -1;
   }
 
   long long count;
