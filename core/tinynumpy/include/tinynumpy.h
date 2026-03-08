@@ -1,83 +1,54 @@
 #ifndef TINYNUMPY_H
 #define TINYNUMPY_H
 
-/**
- * Core data structure: ndarray
- * Represents a multi-dimensional array with contiguous memory layout.
- */
+#include <stdint.h>
+
+#define MAX_DIMS 32
+#define NP_SAFE_FREE(ptr)                                                      \
+  do {                                                                         \
+    np_free(ptr);                                                              \
+    (ptr) = NULL;                                                              \
+  } while (0)
+
+typedef enum {
+  NP_OK = 0,
+  NP_ERR_INVALID_DIM,
+  NP_ERR_DIM_MISMATCH,
+  NP_ERR_INVALID_SHAPE,
+  NP_ERR_SHAPE_MISMATCH,
+  NP_ERR_INVALID_STEP,
+  NP_ERR_NULL_PTR,
+  NP_ERR_ALLOC,
+  NP_ERR_OVERFLOW,
+  NP_ERR_OUT_OF_BOUNDS
+} np_status;
 
 typedef struct {
-  double *data; // Pointer to the raw data (stored as a flattened 1D array)
-  int *shape;   // Size of each dimension
-  int *strides; // Number of elements to skip to reach the next element
-  int ndim;     // Number of dimensions
-  int size;     // Total number of elements
+  double *data;
+  int32_t ndim;
+  int64_t *shape;
+  int64_t *strides;
+  int64_t size;
 } ndarray;
 
-/* --- Function Prototypes --- */
-
-// Creation and Destruction
-
-/**
- * Allocates and initializes a new ndarray with the given dimensions.
- */
-ndarray *np_array(int ndim, int *shape);
-
-// Specialized Creation Functions
-
-/**
- * Creates an ndarray of zeros.
- */
-ndarray *np_zeros(int ndim, int *shape);
-
-/**
- * Creates an ndarray initialized to 1.0
- */
-ndarray *np_ones(int ndim, int *shape);
-
-/**
- * Creates evenly spaced values within a given interval
- * Note: Values are generated within the half-open interval [start, stop)
- */
-ndarray *np_arange(double start, double stop, double step);
-
-/**
- * Frees the memory associated with the ndarray, including data, shape, and
- * strides.
- */
 void np_free(ndarray *arr);
 
-// Data Access
+np_status np_array(int32_t ndim, int64_t *shape, ndarray **out);
 
-/**
- * Retrieves the value at the specified multi-dimensional index.
- */
-double np_get(ndarray *arr, int *indices);
+np_status np_zeros(int32_t ndim, int64_t *shape, ndarray **out);
 
-/**
- * Sets the value at the specified multi-dimensional index.
- */
-void np_set(ndarray *arr, int *indices, double value);
+np_status np_ones(int32_t ndim, int64_t *shape, ndarray **out);
 
-// Basic Operations
+np_status np_arange(double start, double stop, double step, ndarray **out);
 
-/**
- * Performs element-wise addition of two ndarrays.
- * Note: Assumes both ndarrays have the same shape.
- */
-ndarray *np_add(ndarray *a, ndarray *b);
+np_status np_get(ndarray *arr, int64_t *indices, double *out);
 
-/**
- * Performs element-wise subtraction of two ndarrays.
- * Note: Assumes both ndarrays have the same shape.
- */
-ndarray *np_subtract(ndarray *a, ndarray *b);
+np_status np_set(ndarray *arr, int64_t *indices, double value);
 
-/**
- * Performs matrix mulplication of two ndarrays.
- * Note: Assumes the last dimension of a match the first dimension of b.
- * Currently supports 2D arrays only.
- */
-ndarray *np_matmul(ndarray *a, ndarray *b);
+np_status np_add(ndarray *a, ndarray *b, ndarray **out);
+
+np_status np_subtract(ndarray *a, ndarray *b, ndarray **out);
+
+np_status np_matmul(ndarray *a, ndarray *b, ndarray **out);
 
 #endif

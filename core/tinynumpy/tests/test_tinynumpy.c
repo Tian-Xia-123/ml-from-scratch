@@ -11,9 +11,11 @@
   } while (0)
 
 void test_np_array() {
-  int shape[] = {2, 3};
-  ndarray *a = np_array(2, shape);
+  int64_t shape[] = {2, 3};
+  ndarray *a = NULL;
+  np_status status = np_array(2, shape, &(a));
 
+  assert(status == NP_OK);
   assert(a != NULL);
   assert(a->ndim == 2);
   assert(a->size == 6);
@@ -23,86 +25,105 @@ void test_np_array() {
 }
 
 void test_np_zeros() {
-  int shape[] = {3, 4, 5};
-  ndarray *a = np_zeros(3, shape);
+  int64_t shape[] = {3, 4, 5};
+  ndarray *a = NULL;
+  np_status status = np_zeros(3, shape, &a);
 
+  assert(status == NP_OK);
   assert(a != NULL);
   assert(a->ndim == 3);
   assert(a->size == 60);
   assert(a->shape[0] == 3 && a->shape[1] == 4 && a->shape[2] == 5);
-  for (int i = 0; i < a->size; i++) {
-    assert(fabs(a->data[i]) < 1e-9);
+  for (int64_t i = 0; i < a->size; i++) {
+    assert(fabs(a->data[i]) < 1e-10);
   }
 
   np_free(a);
 }
 
 void test_np_ones() {
-  int shape[] = {2, 3, 6, 4};
-  ndarray *a = np_ones(4, shape);
+  int64_t shape[] = {2, 3, 6, 4};
+  ndarray *a = NULL;
+  np_status status = np_ones(4, shape, &a);
 
+  assert(status == NP_OK);
   assert(a != NULL);
   assert(a->ndim == 4);
   assert(a->size == 144);
   assert(a->shape[0] == 2 && a->shape[1] == 3 && a->shape[2] == 6 &&
          a->shape[3] == 4);
-  for (int i = 0; i < a->size; i++) {
-    assert(fabs(a->data[i] - 1.0) < 1e-9);
+  for (int64_t i = 0; i < a->size; i++) {
+    assert(fabs(a->data[i] - 1.0) < 1e-10);
   }
 
   np_free(a);
 }
 
 void test_np_arange() {
-  ndarray *a = np_arange(0.0, 5.0, 1);
+  ndarray *a = NULL;
+  np_status status = np_arange(0.0, 5.0, 1, &a);
 
+  assert(status == NP_OK);
   assert(a != NULL);
   assert(a->ndim == 1);
   assert(a->size == 5);
   assert(a->shape[0] == 5);
-  for (int i = 0; i < a->size; i++) {
-    assert(fabs(a->data[i] - i * 1.0) < 1e-9);
+  for (int64_t i = 0; i < a->size; i++) {
+    assert(fabs(a->data[i] - i * 1.0) < 1e-10);
   }
 
   np_free(a);
 }
 
 void test_np_get() {
-  int shape[] = {2, 3, 6};
-  ndarray *a = np_array(3, shape);
-  for (int i = 0; i < a->size; i++) {
+  int64_t shape[] = {2, 3, 6};
+  ndarray *a = NULL;
+  np_array(3, shape, &a);
+  for (int64_t i = 0; i < a->size; i++) {
     a->data[i] = (double)i;
   }
 
-  int indices[3] = {1, 2, 3};
-  assert(fabs(np_get(a, indices) - 33.0) < 1e-9);
+  int64_t indices[3] = {1, 2, 3};
+  double value;
+  np_status status = np_get(a, indices, &value);
+  assert(status == NP_OK);
+  assert(fabs(value - 33.0) < 1e-10);
 
   np_free(a);
 }
 
 void test_np_set() {
-  int shape[] = {2, 3, 6};
-  ndarray *a = np_array(3, shape);
+  int64_t shape[] = {2, 3, 6};
+  ndarray *a = NULL;
+  np_array(3, shape, &a);
 
-  int indices[3] = {1, 2, 3};
-  np_set(a, indices, 6.5);
-  assert(fabs(np_get(a, indices) - 6.5) < 1e-9);
+  int64_t indices[3] = {1, 2, 3};
+  np_status status = np_set(a, indices, 6.5);
+  assert(status == NP_OK);
+
+  double value;
+  np_get(a, indices, &value);
+  assert(fabs(value - 6.5) < 1e-10);
 
   np_free(a);
 }
 
 void test_np_add() {
-  int shape[] = {6, 10, 5};
-  ndarray *a = np_array(3, shape);
-  ndarray *b = np_array(3, shape);
-  for (int i = 0; i < a->size; i++) {
+  int64_t shape[] = {6, 10, 5};
+  ndarray *a = NULL;
+  ndarray *b = NULL;
+  np_array(3, shape, &a);
+  np_array(3, shape, &b);
+  for (int64_t i = 0; i < a->size; i++) {
     a->data[i] = 1.0;
     b->data[i] = 2.0;
   }
 
-  ndarray *res = np_add(a, b);
-  for (int i = 0; i < a->size; i++) {
-    assert(fabs(res->data[i] - 3.0) < 1e-9);
+  ndarray *res = NULL;
+  np_status status = np_add(a, b, &res);
+  assert(status == NP_OK);
+  for (int64_t i = 0; i < a->size; i++) {
+    assert(fabs(res->data[i] - 3.0) < 1e-10);
   }
 
   np_free(a);
@@ -111,16 +132,20 @@ void test_np_add() {
 }
 
 void test_np_subtract() {
-  int shape[] = {6, 10, 5};
-  ndarray *a = np_array(3, shape);
-  ndarray *b = np_array(3, shape);
+  int64_t shape[] = {6, 10, 5};
+  ndarray *a = NULL;
+  ndarray *b = NULL;
+  np_array(3, shape, &a);
+  np_array(3, shape, &b);
   for (int i = 0; i < a->size; i++) {
     a->data[i] = 20.5;
     b->data[i] = 5.1;
   }
 
-  ndarray *res = np_subtract(a, b);
-  for (int i = 0; i < a->size; i++) {
+  ndarray *res = NULL;
+  np_status status = np_subtract(a, b, &res);
+  assert(status == NP_OK);
+  for (int64_t i = 0; i < a->size; i++) {
     assert(fabs(res->data[i] - 15.4) < 1e-9);
   }
 
@@ -130,22 +155,25 @@ void test_np_subtract() {
 }
 
 void test_np_matmul() {
-  int shape_a[2] = {2, 3};
-  int shape_b[2] = {3, 2};
+  int64_t shape_a[2] = {2, 3};
+  int64_t shape_b[2] = {3, 2};
 
-  ndarray *a = np_array(2, shape_a);
-  ndarray *b = np_array(2, shape_b);
+  ndarray *a = NULL;
+  ndarray *b = NULL;
+  np_array(2, shape_a, &a);
+  np_array(2, shape_b, &b);
 
-  for (int i = 0; i < a->size; i++) {
+  for (int64_t i = 0; i < a->size; i++) {
     a->data[i] = i + 1.0;
     b->data[i] = i + 7.0;
   }
 
-  ndarray *res = np_matmul(a, b);
-  assert(fabs(res->data[0] - 58.0) < 1e-9);
-  assert(fabs(res->data[1] - 64.0) < 1e-9);
-  assert(fabs(res->data[2] - 139.0) < 1e-9);
-  assert(fabs(res->data[3] - 154.0) < 1e-9);
+  ndarray *res = NULL;
+  np_status status = np_matmul(a, b, &res);
+  assert(fabs(res->data[0] - 58.0) < 1e-10);
+  assert(fabs(res->data[1] - 64.0) < 1e-10);
+  assert(fabs(res->data[2] - 139.0) < 1e-10);
+  assert(fabs(res->data[3] - 154.0) < 1e-10);
 
   np_free(a);
   np_free(b);
