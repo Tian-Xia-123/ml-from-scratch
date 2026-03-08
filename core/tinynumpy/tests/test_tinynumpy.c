@@ -21,7 +21,7 @@ void test_np_array() {
   assert(a->size == 6);
   assert(a->shape[0] == 2 && a->shape[1] == 3);
 
-  np_free(a);
+  NP_SAFE_FREE(a);
 }
 
 void test_np_zeros() {
@@ -38,7 +38,7 @@ void test_np_zeros() {
     assert(fabs(a->data[i]) < 1e-10);
   }
 
-  np_free(a);
+  NP_SAFE_FREE(a);
 }
 
 void test_np_ones() {
@@ -56,7 +56,7 @@ void test_np_ones() {
     assert(fabs(a->data[i] - 1.0) < 1e-10);
   }
 
-  np_free(a);
+  NP_SAFE_FREE(a);
 }
 
 void test_np_arange() {
@@ -72,7 +72,7 @@ void test_np_arange() {
     assert(fabs(a->data[i] - i * 1.0) < 1e-10);
   }
 
-  np_free(a);
+  NP_SAFE_FREE(a);
 }
 
 void test_np_get() {
@@ -89,7 +89,7 @@ void test_np_get() {
   assert(status == NP_OK);
   assert(fabs(value - 33.0) < 1e-10);
 
-  np_free(a);
+  NP_SAFE_FREE(a);
 }
 
 void test_np_set() {
@@ -105,7 +105,7 @@ void test_np_set() {
   np_get(a, indices, &value);
   assert(fabs(value - 6.5) < 1e-10);
 
-  np_free(a);
+  NP_SAFE_FREE(a);
 }
 
 void test_np_add() {
@@ -126,9 +126,9 @@ void test_np_add() {
     assert(fabs(res->data[i] - 3.0) < 1e-10);
   }
 
-  np_free(a);
-  np_free(b);
-  np_free(res);
+  NP_SAFE_FREE(a);
+  NP_SAFE_FREE(b);
+  NP_SAFE_FREE(res);
 }
 
 void test_np_subtract() {
@@ -149,9 +149,9 @@ void test_np_subtract() {
     assert(fabs(res->data[i] - 15.4) < 1e-9);
   }
 
-  np_free(a);
-  np_free(b);
-  np_free(res);
+  NP_SAFE_FREE(a);
+  NP_SAFE_FREE(b);
+  NP_SAFE_FREE(res);
 }
 
 void test_np_matmul() {
@@ -175,9 +175,9 @@ void test_np_matmul() {
   assert(fabs(res->data[2] - 139.0) < 1e-10);
   assert(fabs(res->data[3] - 154.0) < 1e-10);
 
-  np_free(a);
-  np_free(b);
-  np_free(res);
+  NP_SAFE_FREE(a);
+  NP_SAFE_FREE(b);
+  NP_SAFE_FREE(res);
 }
 
 int main() {
