@@ -78,7 +78,6 @@ int main() {
   printf("Computational Throughput: %f MB/s\n",
          (N * sizeof(double) * 3) / (time_taken * 1024 * 1024));
 
-  ret = 0;
   goto cleanup;
 
 cleanup:

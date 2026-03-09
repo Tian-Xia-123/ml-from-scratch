@@ -9,66 +9,69 @@
 #include <unistd.h>
 
 int main() {
-  int M = 1000;
-  int K = 5000;
-  int N = 1000;
-  int shape_a[] = {M, K};
-  int shape_b[] = {K, N};
-  int ndim = 2;
+  int64_t M = 1000;
+  int64_t K = 5000;
+  int64_t N = 1000;
+  int64_t shape_a[] = {M, K};
+  int64_t shape_b[] = {K, N};
+  int32_t ndim = 2;
 
-  int fd_access = setup_perf_event(PERF_TYPE_HW_CACHE,
-                                   PERF_COUNT_HW_CACHE_L1D |
-                                       PERF_COUNT_HW_CACHE_OP_READ << 8 |
-                                       PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16);
-  int fd_miss = setup_perf_event(PERF_TYPE_HW_CACHE,
-                                 PERF_COUNT_HW_CACHE_L1D |
-                                     PERF_COUNT_HW_CACHE_OP_READ << 8 |
-                                     PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
+  // Initialize resources
+  int fd_access = -1, fd_miss = -1;
+  perf_result *access_res = malloc(sizeof(*access_res));
+  perf_result *miss_res = malloc(sizeof(*miss_res));
+  ndarray *a = NULL, *b = NULL, *dummy = NULL, *res = NULL;
+  int ret = 0;
 
-  ndarray *a = np_array(ndim, shape_a);
-  ndarray *b = np_array(ndim, shape_b);
-  if (a == NULL || b == NULL) {
-    return -1;
+  fd_access = setup_perf_event(PERF_TYPE_HW_CACHE,
+                               PERF_COUNT_HW_CACHE_L1D |
+                                   PERF_COUNT_HW_CACHE_OP_READ << 8 |
+                                   PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16);
+  fd_miss = setup_perf_event(PERF_TYPE_HW_CACHE,
+                             PERF_COUNT_HW_CACHE_L1D |
+                                 PERF_COUNT_HW_CACHE_OP_READ << 8 |
+                                 PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
+
+  if (fd_access == -1 || fd_miss == -1 || !access_res || !miss_res) {
+    ret = -1;
+    goto cleanup;
   }
 
-  for (int i = 0; i < a->size; i++) {
+  // Initialize arrays
+  if (np_array(ndim, shape_a, &a) != NP_OK ||
+      np_array(ndim, shape_b, &b) != NP_OK) {
+    ret = -1;
+    goto cleanup;
+  }
+  for (int64_t i = 0; i < a->size; i++) {
     a->data[i] = 5.0;
   }
-  for (int i = 0; i < b->size; i++) {
+  for (int64_t i = 0; i < b->size; i++) {
     b->data[i] = 7.5;
   }
 
   // Warm up the CPU cache and trigger lazy memory allocation
-  ndarray *dummy = np_matmul(a, b);
-  np_free(dummy);
+  np_matmul(a, b, &dummy);
 
   start_perf_event(fd_access);
   start_perf_event(fd_miss);
 
-  // Core benchmark logic
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  ndarray *res = np_matmul(a, b);
+  if (np_matmul(a, b, &res) != NP_OK) {
+    ret = -1;
+    goto cleanup;
+  }
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   stop_perf_event(fd_access);
   stop_perf_event(fd_miss);
 
-  perf_result *access_res = malloc(sizeof(*access_res));
-  perf_result *miss_res = malloc(sizeof(*miss_res));
+  read_perf_event(fd_access, access_res);
+  read_perf_event(fd_miss, miss_res);
 
-  if (access_res == NULL || miss_res == NULL) {
-    perror("malloc failed");
-    return -1;
-  }
-
-  if (read_perf_event(fd_access, access_res) == -1 ||
-      read_perf_event(fd_miss, miss_res) == -1) {
-    return -1;
-  }
-
-  printf("Array a Size: %d x %d\n", M, K);
-  printf("Array b Size: %d x %d\n", K, N);
+  printf("Array a Size: %" PRId64 " x %" PRId64 "\n", M, K);
+  printf("Array b Size: %" PRId64 " x %" PRId64 "\n", K, N);
   printf("Cache L1D Accesses: %" PRIu64 ", Misses: %" PRIu64
          ", Miss Rate: %.2f%%\n",
          access_res->value, miss_res->value,
@@ -79,11 +82,16 @@ int main() {
   printf("Computational Throughput: %f MB/s\n",
          (M * K * N * sizeof(double) * 4) / (time_taken * 1024 * 1024));
 
-  np_free(a);
-  np_free(b);
-  np_free(res);
-  close(fd_access);
-  close(fd_miss);
+  goto cleanup;
 
-  return 0;
+cleanup:
+  NP_SAFE_FREE(a);
+  NP_SAFE_FREE(b);
+  NP_SAFE_FREE(dummy);
+  NP_SAFE_FREE(res);
+  free(access_res);
+  free(miss_res);
+  if (fd_access != -1) close(fd_access);
+  if (fd_miss != -1) close(fd_miss);
+  return ret;
 }
